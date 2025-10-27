@@ -15,7 +15,7 @@ try {
         throw new Exception("ID de unidad no proporcionado");
     }
 
-    $id = $data->id;
+    $id = $data->id; // ejemplo
 
     // Get the database connection
     $db = Conexion::conectar();
