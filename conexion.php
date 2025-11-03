@@ -20,10 +20,10 @@ class Conexion{
 }
 // Prueba de conexión
 
-
+/*
 if (!Conexion::conectar()) {
     echo json_encode(['success' => false, 'message' => 'Error de conexión']);
     exit();
 } else {
     echo json_encode(['success' => true, 'message' => 'Conexión exitosa']);
-}
+}*/
