@@ -5,7 +5,7 @@ require_once '../conexion.php';
 
 try {
     $conexion = Conexion::conectar();
-    $stmt = $conexion->prepare("SELECT id_instalacion, id_servicio, id_unidad, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios, creado_en, actualizado_en FROM instalaciones ORDER BY fecha_instalacion DESC");
+    $stmt = $conexion->prepare("SELECT id_instalacion, id_servicio, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios, creado_en, actualizado_en FROM instalaciones ORDER BY fecha_instalacion DESC");
     $stmt->execute();
 
     $instalaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);

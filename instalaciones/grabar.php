@@ -19,9 +19,9 @@ if(isset($data->id_servicio) && isset($data->id_unidad) && isset($data->id_tecni
     $comentarios = isset($data->comentarios) ? $data->comentarios : null;
 
     $db = Conexion::conectar();
-    $stmt = $db->prepare("INSERT INTO instalaciones (id_servicio, id_unidad, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios) VALUES (:id_servicio, :id_unidad, :id_tecnico, :fecha_instalacion, :componentes_instalados, :estado, :comentarios)");
+    $stmt = $db->prepare("INSERT INTO instalaciones (id_servicio, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios) VALUES (:id_servicio, :id_tecnico, :fecha_instalacion, :componentes_instalados, :estado, :comentarios)");
     $stmt->bindParam(':id_servicio', $id_servicio);
-    $stmt->bindParam(':id_unidad', $id_unidad);
+    
     $stmt->bindParam(':id_tecnico', $id_tecnico);
     $stmt->bindParam(':fecha_instalacion', $fecha_instalacion);
     $stmt->bindParam(':componentes_instalados', $componentes_instalados);

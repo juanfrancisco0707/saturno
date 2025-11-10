@@ -19,7 +19,7 @@ if ($id_instalacion === false) {
 
 try {
     $conexion = Conexion::conectar();
-    $stmt = $conexion->prepare("SELECT id_instalacion, id_servicio, id_unidad, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios, creado_en, actualizado_en FROM instalaciones WHERE id_instalacion = :id_instalacion");
+    $stmt = $conexion->prepare("SELECT id_instalacion, id_servicio, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios, creado_en, actualizado_en FROM instalaciones WHERE id_instalacion = :id_instalacion");
     $stmt->bindParam(':id_instalacion', $id_instalacion, PDO::PARAM_INT);
     $stmt->execute();
 

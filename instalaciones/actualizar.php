@@ -38,17 +38,17 @@ try {
 
     // Asignar valores actuales y actualizarlos si se proporcionan nuevos datos
     $id_servicio = isset($data->id_servicio) ? $data->id_servicio : $instalacion_actual['id_servicio'];
-    $id_unidad = isset($data->id_unidad) ? $data->id_unidad : $instalacion_actual['id_unidad'];
+    
     $id_tecnico = isset($data->id_tecnico) ? $data->id_tecnico : $instalacion_actual['id_tecnico'];
     $fecha_instalacion = isset($data->fecha_instalacion) ? $data->fecha_instalacion : $instalacion_actual['fecha_instalacion'];
     $componentes_instalados = isset($data->componentes_instalados) ? $data->componentes_instalados : $instalacion_actual['componentes_instalados'];
     $estado = isset($data->estado) ? $data->estado : $instalacion_actual['estado'];
     $comentarios = isset($data->comentarios) ? $data->comentarios : $instalacion_actual['comentarios'];
 
-    $stmt = $conexion->prepare("UPDATE instalaciones SET id_servicio = :id_servicio, id_unidad = :id_unidad, id_tecnico = :id_tecnico, fecha_instalacion = :fecha_instalacion, componentes_instalados = :componentes_instalados, estado = :estado, comentarios = :comentarios, actualizado_en = current_timestamp() WHERE id_instalacion = :id_instalacion");
+    $stmt = $conexion->prepare("UPDATE instalaciones SET id_servicio = :id_servicio, id_tecnico = :id_tecnico, fecha_instalacion = :fecha_instalacion, componentes_instalados = :componentes_instalados, estado = :estado, comentarios = :comentarios, actualizado_en = current_timestamp() WHERE id_instalacion = :id_instalacion");
     
     $stmt->bindParam(':id_servicio', $id_servicio);
-    $stmt->bindParam(':id_unidad', $id_unidad);
+   
     $stmt->bindParam(':id_tecnico', $id_tecnico);
     $stmt->bindParam(':fecha_instalacion', $fecha_instalacion);
     $stmt->bindParam(':componentes_instalados', $componentes_instalados);
