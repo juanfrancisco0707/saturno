@@ -49,7 +49,7 @@ try {
     $tarjeta_sim = isset($data->tarjeta_sim) ? $data->tarjeta_sim : $servicio_actual['tarjeta_sim'];
 
     // Validaciones de CHECK constraints
-    $valid_tipos = ['renovacion', 'instalacion'];
+    $valid_tipos = ['renovacion', 'instalacion', 'mantenimiento', 'otros'];
     $valid_estados = ['vencido', 'pendiente', 'pagado'];
     $valid_periodos_pago = ['anual', 'semestral', 'bimestral', 'mensual'];
 
