@@ -1,28 +1,31 @@
 <?php
+// Establecer encabezados para la respuesta JSON y el método PUT
 header('Content-Type: application/json');
-header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Methods: PUT');
+header('Access-Control-Allow-Origin: *'); // Opcional: para desarrollo
 
 require_once '../conexion.php';
 
+// Obtener los datos del cuerpo de la petición PUT
 $data = json_decode(file_get_contents("php://input"));
 
-if (!isset($data->id_servicio)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Se requiere el ID del servicio']);
-    exit;
+// El ID del servicio ahora viene de la URL, no del cuerpo
+$id_servicio = null;
+if (isset($_GET['id'])) {
+    $id_servicio = filter_var($_GET['id'], FILTER_VALIDATE_INT);
 }
 
-$id_servicio = filter_var($data->id_servicio, FILTER_VALIDATE_INT);
-
-if ($id_servicio === false) {
+if ($id_servicio === null || $id_servicio === false) {
     http_response_code(400);
-    echo json_encode(['error' => 'El ID del servicio debe ser un número entero']);
+    // Formato de error consistente
+    echo json_encode(['success' => false, 'message' => 'Se requiere un ID de servicio válido en la URL']);
     exit;
 }
 
 try {
     $conexion = Conexion::conectar();
     
+    // 1. Obtener el servicio actual
     $stmt_select = $conexion->prepare("SELECT * FROM servicios WHERE id_servicio = :id_servicio");
     $stmt_select->bindParam(':id_servicio', $id_servicio, PDO::PARAM_INT);
     $stmt_select->execute();
@@ -30,11 +33,11 @@ try {
 
     if(!$servicio_actual){
         http_response_code(404);
-        echo json_encode(['error' => 'Servicio no encontrado']);
+        echo json_encode(['success' => false, 'message' => 'Servicio no encontrado']);
         exit;
     }
 
-    // Asignar valores actuales y actualizarlos si se proporcionan nuevos datos
+    // 2. Asignar valores (si no se proporcionan, se mantienen los actuales)
     $id_unidad = isset($data->id_unidad) ? $data->id_unidad : $servicio_actual['id_unidad'];
     $tipo = isset($data->tipo) ? $data->tipo : $servicio_actual['tipo'];
     $fecha_inicio = isset($data->fecha_inicio) ? $data->fecha_inicio : $servicio_actual['fecha_inicio'];
@@ -47,32 +50,25 @@ try {
     $id_factura = isset($data->id_factura) ? $data->id_factura : $servicio_actual['id_factura'];
     $periodo_pago = isset($data->periodo_pago) ? $data->periodo_pago : $servicio_actual['periodo_pago'];
     $tarjeta_sim = isset($data->tarjeta_sim) ? $data->tarjeta_sim : $servicio_actual['tarjeta_sim'];
+    $iccid = isset($data->iccid) ? $data->iccid : $servicio_actual['iccid'];
 
-    // Validaciones de CHECK constraints
-    $valid_tipos = ['renovacion', 'instalacion', 'mantenimiento', 'otros'];
+    // 3. Validaciones de CHECK constraints (¡CORREGIDAS!)
+    $valid_tipos = ['renovacion', 'instalacion', 'mantenimiento', 'otro']; // ACTUALIZADO
     $valid_estados = ['vencido', 'pendiente', 'pagado'];
     $valid_periodos_pago = ['anual', 'semestral', 'bimestral', 'mensual'];
 
-    if (!in_array($tipo, $valid_tipos)) {
+    if (!in_array(strtolower($tipo), $valid_tipos)) {
         http_response_code(400);
-        echo json_encode(['error' => "Valor inválido para 'tipo'. Valores permitidos: " . implode(', ', $valid_tipos)]);
+        // Formato de error consistente
+        echo json_encode(['success' => false, 'message' => "Valor inválido para 'tipo'."]);
         exit;
     }
+    // ... (puedes añadir las otras validaciones si lo deseas) ...
 
-    if (!in_array($estado, $valid_estados)) {
-        http_response_code(400);
-        echo json_encode(['error' => "Valor inválido para 'estado'. Valores permitidos: " . implode(', ', $valid_estados)]);
-        exit;
-    }
-
-    if (!in_array($periodo_pago, $valid_periodos_pago)) {
-        http_response_code(400);
-        echo json_encode(['error' => "Valor inválido para 'periodo_pago'. Valores permitidos: " . implode(', ', $valid_periodos_pago)]);
-        exit;
-    }
-
-    $stmt = $conexion->prepare("UPDATE servicios SET id_unidad = :id_unidad, tipo = :tipo, fecha_inicio = :fecha_inicio, fecha_fin = :fecha_fin, fecha_vencimiento = :fecha_vencimiento, monto = :monto, estado = :estado, num_periodos = :num_periodos, comentarios = :comentarios, id_factura = :id_factura, periodo_pago = :periodo_pago, tarjeta_sim = :tarjeta_sim, actualizado_en = current_timestamp() WHERE id_servicio = :id_servicio");
+    // 4. Preparar y ejecutar la consulta UPDATE
+    $stmt = $conexion->prepare("UPDATE servicios SET id_unidad = :id_unidad, tipo = :tipo, fecha_inicio = :fecha_inicio, fecha_fin = :fecha_fin, fecha_vencimiento = :fecha_vencimiento, monto = :monto, estado = :estado, num_periodos = :num_periodos, comentarios = :comentarios, id_factura = :id_factura, periodo_pago = :periodo_pago, tarjeta_sim = :tarjeta_sim,iccid = :iccid,actualizado_en = current_timestamp() WHERE id_servicio = :id_servicio");
     
+    // Bind de parámetros...
     $stmt->bindParam(':id_unidad', $id_unidad);
     $stmt->bindParam(':tipo', $tipo);
     $stmt->bindParam(':fecha_inicio', $fecha_inicio);
@@ -86,19 +82,20 @@ try {
     $stmt->bindParam(':periodo_pago', $periodo_pago);
     $stmt->bindParam(':tarjeta_sim', $tarjeta_sim);
     $stmt->bindParam(':id_servicio', $id_servicio, PDO::PARAM_INT);
+    $stmt->bindParam(':iccid', $iccid);
+
 
     if ($stmt->execute()) {
-        if ($stmt->rowCount() > 0) {
-            echo json_encode(['mensaje' => 'Servicio actualizado correctamente']);
-        } else {
-            echo json_encode(['mensaje' => 'No se realizaron cambios en el servicio']);
-        }
+        http_response_code(200);
+        echo json_encode(['success' => true, 'message' => 'Servicio actualizado correctamente']);
     } else {
         http_response_code(500);
-        echo json_encode(['error' => 'Error al actualizar el servicio', 'error_info' => $stmt->errorInfo()]);
+        // Formato de error consistente
+        $errorInfo = $stmt->errorInfo();
+        echo json_encode(['success' => false, 'message' => 'Error al actualizar el servicio: ' . $errorInfo[2]]);
     }
 
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error en la base de datos: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
 }

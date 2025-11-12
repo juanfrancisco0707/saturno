@@ -20,6 +20,8 @@ if (isset($data['id_unidad'])) {
     $comentarios = isset($data['comentarios']) ? $data['comentarios'] : null;
     $estatus = isset($data['estatus']) ? $data['estatus'] : null;
     $tarjeta_sim = isset($data['tarjeta_sim']) ? $data['tarjeta_sim'] : null;
+    $iccid = isset($data['iccid']) ? $data['iccid'] : null;
+
 
     try {
         $db = Conexion::conectar();
@@ -34,6 +36,8 @@ if (isset($data['id_unidad'])) {
         if ($comentarios !== null) $update_fields[] = "comentarios = :comentarios";
         if ($estatus !== null) $update_fields[] = "estatus = :estatus";
         if ($tarjeta_sim !== null) $update_fields[] = "tarjeta_sim = :tarjeta_sim";
+        if ($iccid !== null) $update_fields[] = "iccid = :iccid";
+
 
         if (count($update_fields) > 0) {
             $query = "UPDATE unidades SET " . implode(', ', $update_fields) . " WHERE id_unidad = :id_unidad";
@@ -48,6 +52,7 @@ if (isset($data['id_unidad'])) {
             if ($comentarios !== null) $stmt->bindParam(':comentarios', $comentarios);
             if ($estatus !== null) $stmt->bindParam(':estatus', $estatus);
             if ($tarjeta_sim !== null) $stmt->bindParam(':tarjeta_sim', $tarjeta_sim);
+            if ($iccid !== null) $stmt->bindParam(':iccid', $iccid);
             $stmt->bindParam(':id_unidad', $id_unidad);
 
             if ($stmt->execute()) {

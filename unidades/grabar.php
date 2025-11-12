@@ -20,10 +20,14 @@ if (isset($data['id_cliente']) && isset($data['nombre_unidad']) && isset($data['
     $comentarios = isset($data['comentarios']) ? $data['comentarios'] : null;
     $estatus = isset($data['estatus']) ? $data['estatus'] : 'activa';
     $tarjeta_sim = isset($data['tarjeta_sim']) ? $data['tarjeta_sim'] : null;
+    $iccid = isset($data['iccid']) ? $data['iccid'] : null;
+    
+
 
     try {
         $db = Conexion::conectar();
-        $stmt = $db->prepare("INSERT INTO unidades (id_cliente, nombre_unidad, fecha_instalacion, ultima_fecha_instalacion, comentarios, estatus, tarjeta_sim, idcategoria) VALUES (:id_cliente, :nombre_unidad, :fecha_instalacion, :ultima_fecha_instalacion, :comentarios, :estatus, :tarjeta_sim, :idcategoria)");
+        $stmt = $db->prepare("INSERT INTO unidades 
+        (id_cliente, nombre_unidad, fecha_instalacion, ultima_fecha_instalacion, comentarios, estatus, tarjeta_sim,iccid, idcategoria) VALUES (:id_cliente, :nombre_unidad, :fecha_instalacion, :ultima_fecha_instalacion, :comentarios, :estatus, :tarjeta_sim,:iccid, :idcategoria)");
         
         $stmt->bindParam(':id_cliente', $id_cliente);
         $stmt->bindParam(':nombre_unidad', $nombre_unidad);
@@ -32,7 +36,9 @@ if (isset($data['id_cliente']) && isset($data['nombre_unidad']) && isset($data['
         $stmt->bindParam(':comentarios', $comentarios);
         $stmt->bindParam(':estatus', $estatus);
         $stmt->bindParam(':tarjeta_sim', $tarjeta_sim);
+        $stmt->bindParam(':iccid', $iccid);
         $stmt->bindParam(':idcategoria', $idcategoria);
+        
 
         if ($stmt->execute()) {
             $response['success'] = true;
