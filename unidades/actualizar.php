@@ -22,6 +22,15 @@ if (isset($data['id_unidad'])) {
     $tarjeta_sim = isset($data['tarjeta_sim']) ? $data['tarjeta_sim'] : null;
     $iccid = isset($data['iccid']) ? $data['iccid'] : null;
 
+    if ($estatus !== null) {
+        $allowed_estatus = ['activa', 'standby', 'baja'];
+        if (!in_array($estatus, $allowed_estatus)) {
+            $response['success'] = false;
+            $response['message'] = "Valor de estatus no válido. Debe ser 'activa', 'standby' o 'baja'.";
+            echo json_encode($response);
+            exit;
+        }
+    }
 
     try {
         $db = Conexion::conectar();

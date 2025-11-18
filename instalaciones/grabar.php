@@ -7,38 +7,50 @@ $response = array();
 
 // Obtener datos JSON del cuerpo de la petición
 $json_data = file_get_contents("php://input");
-$data = json_decode($json_data);
+$data = json_decode($json_data, true); // Decode as associative array
 
-if(isset($data->id_servicio) && isset($data->id_unidad) && isset($data->id_tecnico) && isset($data->fecha_instalacion)){
-    $id_servicio = $data->id_servicio;
-    $id_unidad = $data->id_unidad;
-    $id_tecnico = $data->id_tecnico;
-    $fecha_instalacion = $data->fecha_instalacion;
-    $componentes_instalados = isset($data->componentes_instalados) ? $data->componentes_instalados : null;
-    $estado = !empty($data->estado) ? $data->estado : 'en_progreso';
-    $comentarios = isset($data->comentarios) ? $data->comentarios : null;
-
-    $db = Conexion::conectar();
-    $stmt = $db->prepare("INSERT INTO instalaciones (id_servicio, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios) VALUES (:id_servicio, :id_tecnico, :fecha_instalacion, :componentes_instalados, :estado, :comentarios)");
-    $stmt->bindParam(':id_servicio', $id_servicio);
+// CORRECTED: Check for keys that the app actually sends. id_unidad is no longer required.
+if(isset($data['id_servicio']) && isset($data['id_tecnico']) && isset($data['fecha_instalacion'])){
+    $id_servicio = $data['id_servicio'];
+    $id_tecnico = $data['id_tecnico'];
+    $fecha_instalacion = $data['fecha_instalacion'];
     
-    $stmt->bindParam(':id_tecnico', $id_tecnico);
-    $stmt->bindParam(':fecha_instalacion', $fecha_instalacion);
-    $stmt->bindParam(':componentes_instalados', $componentes_instalados);
-    $stmt->bindParam(':estado', $estado);
-    $stmt->bindParam(':comentarios', $comentarios);
+    // Optional fields
+    $componentes_instalados = isset($data['componentes_instalados']) ? $data['componentes_instalados'] : null;
+    $estado = !empty($data['estado']) ? $data['estado'] : 'en_progreso';
+    $comentarios = isset($data['comentarios']) ? $data['comentarios'] : null;
 
-    if($stmt->execute()){
-        $response['success'] = true;
-        $response['message'] = "Instalación guardada exitosamente";
-    } else {
+    try {
+        $db = Conexion::conectar();
+        // The INSERT statement is already correct (it doesn't try to insert id_unidad).
+        $stmt = $db->prepare("INSERT INTO instalaciones (id_servicio, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios) VALUES (:id_servicio, :id_tecnico, :fecha_instalacion, :componentes_instalados, :estado, :comentarios)");
+        
+        $stmt->bindParam(':id_servicio', $id_servicio);
+        $stmt->bindParam(':id_tecnico', $id_tecnico);
+        $stmt->bindParam(':fecha_instalacion', $fecha_instalacion);
+        $stmt->bindParam(':componentes_instalados', $componentes_instalados);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->bindParam(':comentarios', $comentarios);
+
+        if($stmt->execute()){
+            $response['success'] = true;
+            // CRUCIAL: Return the new ID for the wizard flow
+            $response['id'] = $db->lastInsertId(); 
+            $response['message'] = "Instalación guardada exitosamente";
+        } else {
+            $response['success'] = false;
+            $response['message'] = "Error al guardar la instalación";
+            $response['error_info'] = $stmt->errorInfo();
+        }
+    } catch (PDOException $e) {
+        http_response_code(500);
         $response['success'] = false;
-        $response['message'] = "Error al guardar la instalación";
-        $response['error_info'] = $stmt->errorInfo();
+        $response['message'] = "Error de base de datos: " . $e->getMessage();
     }
+
 } else {
     $response['success'] = false;
-    $response['message'] = "No se recibieron todos los datos requeridos";
+    $response['message'] = "No se recibieron todos los datos requeridos (id_servicio, id_tecnico, fecha_instalacion)";
 }
 
 echo json_encode($response);
