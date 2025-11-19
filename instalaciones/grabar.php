@@ -23,7 +23,8 @@ if(isset($data['id_servicio']) && isset($data['id_tecnico']) && isset($data['fec
     try {
         $db = Conexion::conectar();
         // The INSERT statement is already correct (it doesn't try to insert id_unidad).
-        $stmt = $db->prepare("INSERT INTO instalaciones (id_servicio, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios) VALUES (:id_servicio, :id_tecnico, :fecha_instalacion, :componentes_instalados, :estado, :comentarios)");
+        $stmt = $db->prepare("INSERT INTO instalaciones (id_servicio, id_tecnico, fecha_instalacion, componentes_instalados, estado, comentarios)
+         VALUES (:id_servicio, :id_tecnico, :fecha_instalacion, :componentes_instalados, :estado, :comentarios)");
         
         $stmt->bindParam(':id_servicio', $id_servicio);
         $stmt->bindParam(':id_tecnico', $id_tecnico);
