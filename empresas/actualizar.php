@@ -1,53 +1,58 @@
 <?php
-// Set headers to allow cross-origin requests and specify JSON content type
+// Configuración de headers para permitir el acceso desde la app
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 header('Access-Control-Allow-Methods: PUT');
 header('Access-Control-Allow-Headers: Access-Control-Allow-Headers,Content-Type,Access-Control-Allow-Methods, Authorization, X-Requested-With');
 
-// Include the database connection file
 require_once('../conexion.php');
 
-// Get the database connection
-$db = Conexion::conectar();
+$response = array();
 
-// Leer el cuerpo de la solicitud
-$data = json_decode(file_get_contents("php://input"));
+try {
+    $db = Conexion::conectar();
+    
+    // Leer el cuerpo de la solicitud (JSON)
+    $json_data = file_get_contents("php://input");
+    $data = json_decode($json_data);
 
-// Check if data is not empty
-if (
-    !empty($data->id) &&
-    !empty($data->nombre) &&
-    !empty($data->direccion) &&
-    !empty($data->telefono) &&
-    !empty($data->correo) &&
-    !empty($data->rfc) &&
-    !empty($data->representante) &&
-    isset($data->folio_factura)
-) {
-    // Prepare the SQL statement to update the company
-    $sentencia = $db->prepare("UPDATE empresa SET nombre = :nombre, direccion = :direccion, telefono = :telefono, correo = :correo, rfc = :rfc, representante = :representante, folio_factura = :folio_factura WHERE id = :id");
+    if (
+        isset($data->id) &&
+        isset($data->nombre) &&
+        isset($data->direccion) &&
+        isset($data->telefono) &&
+        isset($data->correo) &&
+        isset($data->rfc) &&
+        isset($data->representante) &&
+        isset($data->folio_factura)
+    ) {
+        $sentencia = $db->prepare("UPDATE empresa SET nombre = :nombre, direccion = :direccion, telefono = :telefono, correo = :correo, rfc = :rfc, representante = :representante, folio_factura = :folio_factura WHERE id = :id");
 
-    // Bind the data
-    $sentencia->bindParam(':id', $data->id);
-    $sentencia->bindParam(':nombre', $data->nombre);
-    $sentencia->bindParam(':direccion', $data->direccion);
-    $sentencia->bindParam(':telefono', $data->telefono);
-    $sentencia->bindParam(':correo', $data->correo);
-    $sentencia->bindParam(':rfc', $data->rfc);
-    $sentencia->bindParam(':representante', $data->representante);
-    $sentencia->bindParam(':folio_factura', $data->folio_factura);
+        $sentencia->bindParam(':id', $data->id);
+        $sentencia->bindParam(':nombre', $data->nombre);
+        $sentencia->bindParam(':direccion', $data->direccion);
+        $sentencia->bindParam(':telefono', $data->telefono);
+        $sentencia->bindParam(':correo', $data->correo);
+        $sentencia->bindParam(':rfc', $data->rfc);
+        $sentencia->bindParam(':representante', $data->representante);
+        $sentencia->bindParam(':folio_factura', $data->folio_factura);
 
-    // Execute the statement
-    if ($sentencia->execute()) {
-        // Success response
-        echo json_encode(array('mensaje' => 'Empresa actualizada correctamente'));
+        if ($sentencia->execute()) {
+            $response['success'] = true;
+            $response['message'] = "Empresa actualizada correctamente";
+        } else {
+            $response['success'] = false;
+            $response['message'] = "Error al ejecutar la actualización";
+        }
     } else {
-        // Error response
-        echo json_encode(array('error' => 'Error al actualizar la empresa'));
+        $response['success'] = false;
+        $response['message'] = "Datos incompletos. Asegúrate de enviar todos los campos.";
     }
-} else {
-    // Incomplete data response
-    echo json_encode(array('error' => 'Datos incompletos'));
+
+} catch (Exception $e) {
+    $response['success'] = false;
+    $response['message'] = "Excepción en el servidor: " . $e->getMessage();
 }
+
+echo json_encode($response);
 ?>
