@@ -23,7 +23,7 @@ if (empty($username) || empty($password)) {
 }
 
 try {
-    $stmt = $conn->prepare("SELECT id, username, password FROM usuarios WHERE username = :username");
+    $stmt = $conn->prepare("SELECT id, username, password, nombre FROM usuarios WHERE username = :username");
     $stmt->bindParam(':username', $username, PDO::PARAM_STR);
     $stmt->execute();
 
@@ -34,7 +34,8 @@ try {
                 'success' => true,
                 'user' => [
                     'id' => $row['id'],
-                    'username' => $row['username']
+                    'username' => $row['username'],
+                    'nombre' => $row['nombre']
                 ]
             ]);
         } else {

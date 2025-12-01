@@ -4,7 +4,7 @@ header('Access-Control-Allow-Origin: *');
 require_once '../conexion.php';
 
 $db = Conexion::conectar();
-
+ // detalle de facturas
 try {
     $sql = "SELECT * FROM detalle_facturas_servicios ORDER BY fecha_emision DESC";
     $stmt = $db->prepare($sql);
