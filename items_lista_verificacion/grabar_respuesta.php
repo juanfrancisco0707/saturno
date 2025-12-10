@@ -2,46 +2,57 @@
 header('Content-Type: application/json');
 require_once '../conexion.php';
 
-$response = array();
-$json_data = file_get_contents("php://input");
-$data = json_decode($json_data);
+$data = json_decode(file_get_contents("php://input"));
 
-if(isset($data->id_instalacion) && isset($data->id_item)){
-    $id_instalacion = $data->id_instalacion;
-    $id_item = $data->id_item;
-    $verificado = isset($data->verificado) && $data->verificado ? 1 : 0;
-    $comentarios = isset($data->comentarios) ? $data->comentarios : '';
-
-    $db = Conexion::conectar();
-    
-    // Verificar si ya existe el registro para actualizarlo o insertarlo
-    $check = $db->prepare("SELECT id FROM listas_verificacion_instalacion WHERE id_instalacion = :id_instalacion AND id_item = :id_item");
-    $check->bindParam(':id_instalacion', $id_instalacion);
-    $check->bindParam(':id_item', $id_item);
-    $check->execute();
-    
-    if($check->rowCount() > 0){
-        $stmt = $db->prepare("UPDATE listas_verificacion_instalacion SET verificado = :verificado, comentarios = :comentarios WHERE id_instalacion = :id_instalacion AND id_item = :id_item");
-    } else {
-        $stmt = $db->prepare("INSERT INTO listas_verificacion_instalacion (id_instalacion, id_item, verificado, comentarios) VALUES (:id_instalacion, :id_item, :verificado, :comentarios)");
-    }
-    
-    $stmt->bindParam(':id_instalacion', $id_instalacion);
-    $stmt->bindParam(':id_item', $id_item);
-    $stmt->bindParam(':verificado', $verificado);
-    $stmt->bindParam(':comentarios', $comentarios);
-
-    if($stmt->execute()){
-        $response['success'] = true;
-        $response['message'] = "Guardado exitosamente";
-    } else {
-        $response['success'] = false;
-        $response['message'] = "Error al guardar en base de datos";
-    }
-} else {
-    $response['success'] = false;
-    $response['message'] = "Datos incompletos: Se requiere id_instalacion e id_item";
+if (!isset($data->id_instalacion) || !isset($data->id_item)) {
+    echo json_encode(['success' => false, 'message' => 'Datos incompletos']);
+    exit;
 }
 
-echo json_encode($response);
+$id_instalacion = $data->id_instalacion;
+$id_item = $data->id_item;
+$verificado = $data->verificado ? 1 : 0;
+$comentarios = $data->comentarios ?? '';
+
+try {
+    $con = Conexion::conectar();
+
+    // 1. Verificar si ya existe el registro para actualizarlo o crearlo
+    // OJO: Usamos el nombre en PLURAL: listas_verificacion_instalacion
+    $checkSql = "SELECT id_lista_verificacion FROM listas_verificacion_instalacion 
+                 WHERE id_instalacion = :id_inst AND id_item = :id_item";
+    
+    $stmtCheck = $con->prepare($checkSql);
+    $stmtCheck->execute([':id_inst' => $id_instalacion, ':id_item' => $id_item]);
+    $row = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+    if ($row) {
+        // Actualizar
+        $sql = "UPDATE listas_verificacion_instalacion 
+                SET verificado = :verificado, comentarios = :comentarios, actualizado_en = NOW() 
+                WHERE id_lista_verificacion = :id";
+        $stmt = $con->prepare($sql);
+        $stmt->execute([
+            ':verificado' => $verificado,
+            ':comentarios' => $comentarios,
+            ':id' => $row['id_lista_verificacion']
+        ]);
+    } else {
+        // Insertar nuevo
+        $sql = "INSERT INTO listas_verificacion_instalacion (id_instalacion, id_item, verificado, comentarios) 
+                VALUES (:id_inst, :id_item, :verificado, :comentarios)";
+        $stmt = $con->prepare($sql);
+        $stmt->execute([
+            ':id_inst' => $id_instalacion,
+            ':id_item' => $id_item,
+            ':verificado' => $verificado,
+            ':comentarios' => $comentarios
+        ]);
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Guardado correctamente']);
+
+} catch (PDOException $e) {
+    echo json_encode(['success' => false, 'message' => 'Error DB: ' . $e->getMessage()]);
+}
 ?>

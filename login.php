@@ -23,19 +23,28 @@ if (empty($username) || empty($password)) {
 }
 
 try {
-    $stmt = $conn->prepare("SELECT id, username, password, nombre FROM usuarios WHERE username = :username");
+    // 1. Agregamos u.password al SELECT
+    // 2. Cambiamos :user por :username en el WHERE para que coincida con el bindParam
+    $sql = "SELECT u.id, u.username, u.password, u.nombre, r.nombre as rol_nombre 
+        FROM usuarios u 
+        INNER JOIN roles r ON u.id_rol = r.id_rol 
+        WHERE u.username = :username";
+        
+    $stmt = $conn->prepare($sql);
     $stmt->bindParam(':username', $username, PDO::PARAM_STR);
-    $stmt->execute();
+    $stmt->execute();   
 
     if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        // Verifica la contraseña (ajusta según tu método de almacenamiento)
+        // Verifica la contraseña
         if (password_verify($password, $row['password'])) {
             echo json_encode([
                 'success' => true,
                 'user' => [
                     'id' => $row['id'],
                     'username' => $row['username'],
-                    'nombre' => $row['nombre']
+                    'nombre' => $row['nombre'],
+                    // 3. Enviamos 'rol' para que coincida con Android
+                    'rol' => $row['rol_nombre'] 
                 ]
             ]);
         } else {
@@ -45,6 +54,7 @@ try {
         echo json_encode(['success' => false, 'message' => 'Usuario no encontrado']);
     }
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Error en la consulta']);
+    // Muestra el error real para depurar (quítalo en producción si prefieres)
+    echo json_encode(['success' => false, 'message' => 'Error en la consulta: ' . $e->getMessage()]);
 }
 ?>

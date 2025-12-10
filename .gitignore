@@ -1,0 +1,7 @@
+includes/
+
+vendor/
+
+# Ignore uploaded evidence images
+evidencias/uploads/*
+!evidencias/uploads/.gitkeep

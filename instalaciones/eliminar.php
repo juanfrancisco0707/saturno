@@ -1,44 +1,83 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Methods: POST');
-
 require_once '../conexion.php';
 
-// Leer el cuerpo de la solicitud
+// El cuerpo se envía como JSON, por lo que usamos php://input
 $data = json_decode(file_get_contents("php://input"));
+$id_instalacion = $data->id_instalacion ?? null;
 
-if (!isset($data->id_instalacion)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Se requiere el ID de la instalación']);
+if (!$id_instalacion) {
+    echo json_encode(['success' => false, 'message' => 'ID de instalación no proporcionado.']);
     exit;
 }
 
-$id_instalacion = filter_var($data->id_instalacion, FILTER_VALIDATE_INT);
-
-if ($id_instalacion === false) {
-    http_response_code(400);
-    echo json_encode(['error' => 'El ID de la instalación debe ser un número entero']);
-    exit;
-}
+$con = Conexion::conectar();
 
 try {
-    $conexion = Conexion::conectar();
-    $stmt = $conexion->prepare("DELETE FROM instalaciones WHERE id_instalacion = :id_instalacion");
-    $stmt->bindParam(':id_instalacion', $id_instalacion, PDO::PARAM_INT);
+    // Iniciar una transacción para asegurar que todas las operaciones se completen o ninguna lo haga
+    $con->beginTransaction();
 
-    if ($stmt->execute()) {
-        if ($stmt->rowCount() > 0) {
-            echo json_encode(['mensaje' => 'Instalación borrada correctamente']);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Instalación no encontrada']);
-        }
-    } else {
-        http_response_code(500);
-        echo json_encode(['error' => 'Error al borrar la instalación']);
+    // --- PASO 1: Validar si la instalación se puede borrar ---
+    $checkSql = "SELECT estado, id_servicio FROM instalaciones WHERE id_instalacion = :id";
+    $stmtCheck = $con->prepare($checkSql);
+    $stmtCheck->execute([':id' => $id_instalacion]);
+    $instalacion = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+    if (!$instalacion) {
+        throw new Exception("La instalación con ID $id_instalacion no existe.");
+    }
+    
+    // Buscar si el servicio asociado a esta instalación ya tiene una factura
+    $servicioId = $instalacion['id_servicio'];
+    $facturaSql = "SELECT id_factura FROM servicios WHERE id_servicio = :id_servicio AND id_factura IS NOT NULL";
+    $stmtFactura = $con->prepare($facturaSql);
+    $stmtFactura->execute([':id_servicio' => $servicioId]);
+    
+    if ($stmtFactura->fetch()) {
+        throw new Exception("No se puede borrar. La instalación ya ha sido facturada.");
     }
 
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error en la base de datos: ' . $e->getMessage()]);
+    // Tampoco se puede borrar si ya está marcada como 'completada'
+    if ($instalacion['estado'] == 'completada') {
+        throw new Exception("No se puede borrar. La instalación ya está marcada como completada.");
+    }
+
+    // --- PASO 2: Obtener IDs de los checklist items para borrar evidencias ---
+    $listaSql = "SELECT id_lista_verificacion FROM listas_verificacion_instalacion WHERE id_instalacion = :id";
+    $stmtLista = $con->prepare($listaSql);
+    $stmtLista->execute([':id' => $id_instalacion]);
+    $items_a_borrar = $stmtLista->fetchAll(PDO::FETCH_COLUMN, 0);
+
+    if (!empty($items_a_borrar)) {
+        // --- PASO 3: Borrar evidencias asociadas a esos checklist items ---
+        // (Opcional: aquí podrías agregar código para borrar los archivos físicos del servidor)
+        $inQuery = implode(',', array_fill(0, count($items_a_borrar), '?'));
+        $deleteEvidenciasSql = "DELETE FROM evidencias WHERE id_lista_verificacion IN ($inQuery)";
+        $stmtDeleteEv = $con->prepare($deleteEvidenciasSql);
+        $stmtDeleteEv->execute($items_a_borrar);
+    }
+
+    // --- PASO 4: Borrar los registros del checklist para esta instalación ---
+    $deleteListaSql = "DELETE FROM listas_verificacion_instalacion WHERE id_instalacion = :id";
+    $stmtDeleteLista = $con->prepare($deleteListaSql);
+    $stmtDeleteLista->execute([':id' => $id_instalacion]);
+
+    // --- PASO 5: Finalmente, borrar la instalación principal ---
+    $deleteInstalacionSql = "DELETE FROM instalaciones WHERE id_instalacion = :id";
+    $stmtDeleteInst = $con->prepare($deleteInstalacionSql);
+    $stmtDeleteInst->execute([':id' => $id_instalacion]);
+
+    // Si todo salió bien, confirmamos los cambios en la base de datos
+    $con->commit();
+
+    echo json_encode(['success' => true, 'message' => 'Instalación y datos asociados eliminados correctamente.']);
+
+} catch (Exception $e) {
+    // Si algo falló, revertimos todos los cambios
+    if ($con->inTransaction()) {
+        $con->rollBack();
+    }
+    // Enviamos el mensaje de error a la App
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
+?>

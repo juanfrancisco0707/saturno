@@ -5,7 +5,7 @@ require_once '../conexion.php';
 
 try {
     $conexion = Conexion::conectar();
-    $stmt = $conexion->prepare("SELECT * FROM tecnicos ORDER BY nombre");
+    $stmt = $conexion->prepare("SELECT id_tecnico,nombre,direccion,telefono, correo FROM tecnicos ORDER BY nombre");
     $stmt->execute();
  
     $tecnicos = $stmt->fetchAll(PDO::FETCH_ASSOC);
