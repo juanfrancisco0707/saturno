@@ -12,28 +12,39 @@ require_once('../conexion.php');
 $db = Conexion::conectar();
 
 // Leer el cuerpo de la solicitud
-$data = json_decode(file_get_contents("php://input"));
+$input = file_get_contents("php://input");
+file_put_contents('debug_grabar.txt', "Input received: " . $input . "\n", FILE_APPEND);
+$data = json_decode($input);
+
+// Si se recibe como form-data (POST normal), intenta usar $_POST
+if (empty($data) && !empty($_POST)) {
+    $data = (object) $_POST;
+    file_put_contents('debug_grabar.txt', "Using _POST data: " . print_r($data, true) . "\n", FILE_APPEND);
+}
+
+// Log decoded data
+file_put_contents('debug_grabar.txt', "Decoded data: " . print_r($data, true) . "\n", FILE_APPEND);
+
 
 // Check if data is not empty
 if (
     !empty($data->nombre) &&
     !empty($data->direccion) &&
     !empty($data->telefono) &&
-    !empty($data->correo) &&
-    !empty($data->foto)
+    !empty($data->correo) 
 ) {
    
     // Prepare the SQL statement to insert the client
     $sentencia = $db->prepare("INSERT INTO tecnicos 
-    (nombre, direccion, telefono, correo, foto) 
-    VALUES (:nombre, :direccion, :telefono, :correo, :foto)");
+    (nombre, direccion, telefono, correo) 
+    VALUES (:nombre, :direccion, :telefono, :correo)");
 
     // Bind the data
     $sentencia->bindParam(':nombre', $data->nombre);
     $sentencia->bindParam(':direccion', $data->direccion);
     $sentencia->bindParam(':telefono', $data->telefono);
     $sentencia->bindParam(':correo', $data->correo);
-    $sentencia->bindParam(':foto', $data->foto);
+   // $sentencia->bindParam(':foto', $data->foto);
 
     // Execute the statement
     if ($sentencia->execute()) {
@@ -45,6 +56,17 @@ if (
     }
 } else {
     // Incomplete data response
-    echo json_encode(array('error' => 'Datos incompletos'));
+    $missing = [];
+    if (empty($data->nombre)) $missing[] = 'nombre';
+    if (empty($data->direccion)) $missing[] = 'direccion';
+    if (empty($data->telefono)) $missing[] = 'telefono';
+    if (empty($data->correo)) $missing[] = 'correo';
+    
+    echo json_encode(array(
+        'error' => 'Datos incompletos',
+        'missing' => $missing,
+        'received' => $data,
+        'raw_input' => $input 
+    ));
 }
 ?>

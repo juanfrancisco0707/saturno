@@ -1,0 +1,35 @@
+Input received: 
+Using POST data: 3
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 3
+)
+
+Input received: 
+Using POST data: 2
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 2
+)
+
+Input received: 
+Using POST data: 6
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 6
+)
+
+Input received: 
+Using POST data: 1
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 1
+)
+
+Input received: 
+Using POST data: 8
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 8
+)
+

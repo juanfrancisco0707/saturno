@@ -11,18 +11,19 @@ try {
     $data = json_decode(file_get_contents("php://input"));
 
     // Get the ID from the JSON data
-    if (!isset($data->id)) {
+    // Get the ID from the JSON data
+    if (!isset($data->id_unidad)) {
         throw new Exception("ID de unidad no proporcionado");
     }
 
-    $id = $data->id; // ejemplo
+    $id_unidad = $data->id_unidad;
 
     // Get the database connection
     $db = Conexion::conectar();
 
     // Prepare the SQL statement to delete the unit
-    $sentencia = $db->prepare("DELETE FROM unidades WHERE id = :id");
-    $sentencia->bindParam(':id', $id, PDO::PARAM_INT);
+    $sentencia = $db->prepare("DELETE FROM unidades WHERE id_unidad = :id_unidad");
+    $sentencia->bindParam(':id_unidad', $id_unidad, PDO::PARAM_INT);
 
     // Execute the statement
     if ($sentencia->execute()) {

@@ -1,0 +1,57 @@
+Input received: 
+Using _POST data: stdClass Object
+(
+    [id_tecnico] => 3
+    [nombre] => ana 3
+    [direccion] => guasave
+    [correo] => ana@gmail.com
+    [telefono] => 6878765
+)
+
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 3
+    [nombre] => ana 3
+    [direccion] => guasave
+    [correo] => ana@gmail.com
+    [telefono] => 6878765
+)
+
+Input received: 
+Using _POST data: stdClass Object
+(
+    [id_tecnico] => 2
+    [nombre] => JUAN 3
+    [direccion] => Guasave Sinaloa
+    [correo] => jfug@gmail.com
+    [telefono] => 6878578498
+)
+
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 2
+    [nombre] => JUAN 3
+    [direccion] => Guasave Sinaloa
+    [correo] => jfug@gmail.com
+    [telefono] => 6878578498
+)
+
+Input received: 
+Using _POST data: stdClass Object
+(
+    [id_tecnico] => 5
+    [nombre] => juan 1
+    [direccion] => guasave
+    [correo] => juan@gmail.com
+    [telefono] => 6878587458
+)
+
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 5
+    [nombre] => juan 1
+    [direccion] => guasave
+    [correo] => juan@gmail.com
+    [telefono] => 6878587458
+)
+

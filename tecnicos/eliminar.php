@@ -12,7 +12,24 @@ require_once('../conexion.php');
 $db = Conexion::conectar();
 
 // Leer el cuerpo de la solicitud
-$data = json_decode(file_get_contents("php://input"));
+$input = file_get_contents("php://input");
+file_put_contents('debug_delete.txt', "Input received: " . $input . "\n", FILE_APPEND);
+$data = json_decode($input);
+
+// Si no hay JSON válido, revisar si viene por $_GET (query params) o $_POST
+if (empty($data->id_tecnico)) {
+    if (!empty($_GET['id_tecnico'])) {
+        $data = (object) ['id_tecnico' => $_GET['id_tecnico']];
+        file_put_contents('debug_delete.txt', "Using GET data: " . $_GET['id_tecnico'] . "\n", FILE_APPEND);
+    } elseif (!empty($_POST['id_tecnico'])) {
+        $data = (object) ['id_tecnico' => $_POST['id_tecnico']];
+        file_put_contents('debug_delete.txt', "Using POST data: " . $_POST['id_tecnico'] . "\n", FILE_APPEND);
+    }
+}
+
+// Log decoded data
+file_put_contents('debug_delete.txt', "Decoded data: " . print_r($data, true) . "\n", FILE_APPEND);
+
 
 // Check if data is not empty
 if (!empty($data->id_tecnico)) {
@@ -38,6 +55,11 @@ if (!empty($data->id_tecnico)) {
     }
 } else {
     // Incomplete data response
-    echo json_encode(array('error' => 'ID de técnico no proporcionado'));
+    echo json_encode(array(
+        'error' => 'ID de técnico no proporcionado',
+        'received_input' => $input,
+        'received_get' => $_GET,
+        'received_post' => $_POST
+    ));
 }
 ?>
