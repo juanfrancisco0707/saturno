@@ -46,9 +46,16 @@ if(isset($data->id_instalacion) && isset($data->id_empresa)) {
         $stmtUpdInst->bindParam(':id', $data->id_instalacion);
         $stmtUpdInst->execute();
         
-        // 6. Actualizar Servicio (Vincular factura)
-        $stmtUpdServ = $db->prepare("UPDATE servicios SET id_factura = :id_fact, estado = 'pendiente' WHERE id_servicio = :id_serv");
-        $stmtUpdServ->bindParam(':id_fact', $id_factura);
+        // 6. Registrar en factura_detalles y Actualizar Servicio (Estado a pendiente)
+        $stmtDetalle = $db->prepare("INSERT INTO factura_detalles (id_factura, id_servicio, descripcion, monto_unitario, cantidad) VALUES (:id_fact, :id_serv, :desc, :monto, 1)");
+        $desc = "Servicio asociado a la instalación #" . $data->id_instalacion;
+        $stmtDetalle->bindParam(':id_fact', $id_factura);
+        $stmtDetalle->bindParam(':id_serv', $info['id_servicio']);
+        $stmtDetalle->bindParam(':desc', $desc);
+        $stmtDetalle->bindParam(':monto', $info['monto']);
+        $stmtDetalle->execute();
+
+        $stmtUpdServ = $db->prepare("UPDATE servicios SET estado = 'pendiente' WHERE id_servicio = :id_serv");
         $stmtUpdServ->bindParam(':id_serv', $info['id_servicio']);
         $stmtUpdServ->execute();
 

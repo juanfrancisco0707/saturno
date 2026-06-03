@@ -3,44 +3,8 @@
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 
-// Include the database connection file
-require_once('../conexion.php');
+require_once __DIR__ . '/../controllers/UnidadController.php';
 
-try {
-    // Leer el cuerpo de la solicitud
-    $data = json_decode(file_get_contents("php://input"));
-
-    // Get the ID from the JSON data
-    // Get the ID from the JSON data
-    if (!isset($data->id_unidad)) {
-        throw new Exception("ID de unidad no proporcionado");
-    }
-
-    $id_unidad = $data->id_unidad;
-
-    // Get the database connection
-    $db = Conexion::conectar();
-
-    // Prepare the SQL statement to delete the unit
-    $sentencia = $db->prepare("DELETE FROM unidades WHERE id_unidad = :id_unidad");
-    $sentencia->bindParam(':id_unidad', $id_unidad, PDO::PARAM_INT);
-
-    // Execute the statement
-    if ($sentencia->execute()) {
-        // Check if any row was affected
-        if ($sentencia->rowCount() > 0) {
-            // Success response
-            echo json_encode(array('mensaje' => 'Unidad eliminada correctamente'));
-        } else {
-            // No row found with the given ID
-            echo json_encode(array('error' => 'No se encontró ninguna unidad con el ID proporcionado'));
-        }
-    } else {
-        // Error executing the statement
-        throw new Exception("Error al eliminar la unidad");
-    }
-} catch (Exception $e) {
-    // Error response
-    echo json_encode(array('error' => $e->getMessage()));
-}
+$controller = new UnidadController();
+$controller->delete();
 ?>

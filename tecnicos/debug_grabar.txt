@@ -55,3 +55,41 @@ Decoded data: stdClass Object
     [telefono] => 6878587458
 )
 
+Input received: 
+Using _POST data: stdClass Object
+(
+    [id_tecnico] => 
+    [nombre] => juan 12
+    [direccion] => guasave
+    [correo] => juan@gmail.com
+    [telefono] => 6878587458
+)
+
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 
+    [nombre] => juan 12
+    [direccion] => guasave
+    [correo] => juan@gmail.com
+    [telefono] => 6878587458
+)
+
+Input received: 
+Using _POST data: stdClass Object
+(
+    [id_tecnico] => 
+    [nombre] => ana
+    [direccion] => venus 134 col Constelacion
+    [correo] => jfug0707@gmail.com
+    [telefono] => +526878578498
+)
+
+Decoded data: stdClass Object
+(
+    [id_tecnico] => 
+    [nombre] => ana
+    [direccion] => venus 134 col Constelacion
+    [correo] => jfug0707@gmail.com
+    [telefono] => +526878578498
+)
+

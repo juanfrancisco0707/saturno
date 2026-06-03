@@ -1,0 +1,18 @@
+CREATE TABLE `unidades` (
+  `id_unidad` int(11) NOT NULL AUTO_INCREMENT,
+  `id_cliente` int(11) NOT NULL,
+  `nombre_unidad` varchar(255) NOT NULL,
+  `fecha_instalacion` date DEFAULT NULL,
+  `ultima_fecha_instalacion` date DEFAULT NULL,
+  `comentarios` text DEFAULT NULL,
+  `creado_en` datetime DEFAULT current_timestamp(),
+  `actualizado_en` datetime DEFAULT current_timestamp(),
+  `estatus` varchar(20) DEFAULT NULL,
+  `tarjeta_sim` varchar(20) DEFAULT NULL,
+  `iccid` varchar(22) NOT NULL,
+  `idcategoria` int(11) NOT NULL,
+  PRIMARY KEY (`id_unidad`),
+  KEY `fk_unidades_categorias` (`idcategoria`),
+  CONSTRAINT `fk_unidades_categorias` FOREIGN KEY (`idcategoria`) REFERENCES `categorias` (`id`),
+  CONSTRAINT `chk_estatus_unidades` CHECK (`estatus` in ('activa','standby','baja'))
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci

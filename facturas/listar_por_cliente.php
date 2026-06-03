@@ -8,12 +8,12 @@ $estado = isset($_GET['estado']) ? $_GET['estado'] : null;
 if ($id_cliente) {
     $db = Conexion::conectar();
     
-    // Unimos Facturas con Servicios, Unidades y Clientes
-    $sql = "SELECT f.*, s.tipo as nombre_servicio, u.nombre_unidad 
+    // Obtenemos las facturas usando el nuevo campo id_cliente
+    // Calculamos también lo abonado hasta el momento
+    $sql = "SELECT f.*, 
+            (SELECT SUM(monto_abonado) FROM pagos_facturas pf WHERE pf.id_factura = f.id_factura) as total_abonado
             FROM facturas f
-            JOIN servicios s ON f.id_factura = s.id_factura
-            JOIN unidades u ON s.id_unidad = u.id_unidad
-            WHERE u.id_cliente = :id_cliente";
+            WHERE f.id_cliente = :id_cliente";
             
     // Si se envió un estado específico (y no es 'Todos'), filtramos
     if ($estado && $estado != 'Todos') {
@@ -31,6 +31,22 @@ if ($id_cliente) {
     
     $stmt->execute();
     $facturas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Agregar detalle de servicios si se necesita en el frontend (opcional)
+    foreach ($facturas as &$factura) {
+        $stmtDetalles = $db->prepare("SELECT s.tipo as nombre_servicio, u.nombre_unidad 
+                                      FROM factura_detalles fd 
+                                      JOIN servicios s ON fd.id_servicio = s.id_servicio 
+                                      JOIN unidades u ON s.id_unidad = u.id_unidad 
+                                      WHERE fd.id_factura = :id_factura");
+        $stmtDetalles->bindParam(':id_factura', $factura['id_factura']);
+        $stmtDetalles->execute();
+        $factura['detalles'] = $stmtDetalles->fetchAll(PDO::FETCH_ASSOC);
+        
+        if(!$factura['total_abonado']) {
+            $factura['total_abonado'] = 0;
+        }
+    }
     
     echo json_encode($facturas);
 } else {
