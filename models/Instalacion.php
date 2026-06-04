@@ -9,8 +9,8 @@ class Instalacion {
 
     // Configuración SMTP para envío de correos (Gmail)
     private const SMTP_HOST = 'smtp.gmail.com';
-    private const SMTP_USER = 'jfug0707@gmail.com'; // Dirección de Gmail completa
-    private const SMTP_PASS = 'pfhh qlel jegg cbmc'; // Código de 16 caracteres sin espacios (App Password)
+    private const SMTP_USER = ''; // Dirección de Gmail completa
+    private const SMTP_PASS = ''; // Código de 16 caracteres sin espacios (App Password)
     private const SMTP_PORT = 587; // Recomendado: 587 (con STARTTLS / TLS), Alternativo: 465 (con SSL)
     private const SMTP_SECURE = 'tls'; // 'tls' para puerto 587, 'ssl' para puerto 465
     private const SMTP_AUTH = true;
